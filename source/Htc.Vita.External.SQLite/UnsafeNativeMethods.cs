@@ -893,7 +893,7 @@ namespace Htc.Vita.External.SQLite
 
   internal static class HelperMethodsMod
   {
-      private const string NativeApiVersion = "0.9.0-CI4";
+      private const string NativeApiVersion = "0.9.0.2";
 
       private static readonly object FileCheckingLock = new object();
       private static readonly object FileExtractingLock = new object();
@@ -1040,8 +1040,8 @@ namespace Htc.Vita.External.SQLite
 
       private static void InitKnownVersion()
       {
-          Sha1ChecksumWithVersion.Add("74611499ce3f3f9697bca03249f421a176cee5d8", "0.9.0-CI5 (win32)");
-          Sha1ChecksumWithVersion.Add("1e2af66dcdd0d351608a705d2c9ca354d1609d0f", "0.9.0-CI5 (win64)");
+          Sha1ChecksumWithVersion.Add("1dd79286e5dc9333e90beff750ee2dd9e73c0b14", "0.9.0.2 ( win32 / x86 )");
+          Sha1ChecksumWithVersion.Add("2f1540b33d267f7d79fb1304e587c2f79253ca1f", "0.9.0.2 ( win32 / x64 )");
       }
 
       private static string PrepareBinary(string resourceName, string platformName, string binaryName)
