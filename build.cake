@@ -176,34 +176,9 @@ Task("Build-Assemblies")
     );
 });
 
-Task("Prepare-Unit-Test-Data")
-    .WithCriteria(() => "ON".Equals(buildWithUnitTesting))
-    .IsDependentOn("Build-Assemblies")
-    .Does(() =>
-{
-    if (!DirectoryExists(testDataDir))
-    {
-        CreateDirectory(testDataDir);
-    }
-    if (!FileExists(testDataDir + File("TestData.Md5.txt")))
-    {
-        CopyFileToDirectory(
-                $"source/{product}.Tests/TestData.Md5.txt",
-                testDataDir
-        );
-    }
-    if (!FileExists(testDataDir + File("TestData.Sha1.txt")))
-    {
-        CopyFileToDirectory(
-                $"source/{product}.Tests/TestData.Sha1.txt",
-                testDataDir
-        );
-    }
-});
-
 Task("Run-Unit-Tests-Under-AnyCPU-1")
     .WithCriteria(() => "ON".Equals(buildWithUnitTesting))
-    .IsDependentOn("Prepare-Unit-Test-Data")
+    .IsDependentOn("Build-Assemblies")
     .Does(() =>
 {
     CreateDirectory(reportXUnitDirAnyCPU);
