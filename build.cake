@@ -331,9 +331,6 @@ Task("Sign-Assemblies")
     .IsDependentOn("Run-Sonar-End")
     .Does(() =>
 {
-    var currentSignTimestamp = DateTime.Now;
-    Information($"Last timestamp:    {lastSignTimestamp}");
-    Information($"Current timestamp: {currentSignTimestamp}");
     var signKey = "./temp/key.pfx";
     System.IO.File.WriteAllBytes(
             signKey,
@@ -343,32 +340,13 @@ Task("Sign-Assemblies")
     var targetPlatforms = new[]
     {
             "net45",
-            "net5.0",
             "netstandard2.0"
     };
     foreach (var targetPlatform in targetPlatforms)
     {
-        var file = $"./temp/{configuration}/{product}/bin/{targetPlatform}/{product}.dll";
-
-        var totalTimeInMilli = (DateTime.Now - lastSignTimestamp).TotalMilliseconds;
-        if (totalTimeInMilli < signIntervalInMilli)
-        {
-            System.Threading.Thread.Sleep(signIntervalInMilli - (int)totalTimeInMilli);
-        }
-        Sign(
-                file,
-                new SignToolSignSettings
-                {
-                        CertPath = signKey,
-                        Password = signPass,
-                        TimeStampUri = signSha1Uri
-                }
-        );
-        lastSignTimestamp = DateTime.Now;
-
         System.Threading.Thread.Sleep(signIntervalInMilli);
         Sign(
-                file,
+                $"./temp/{configuration}/{product}/bin/{targetPlatform}/{product}.dll",
                 new SignToolSignSettings
                 {
                         AppendSignature = true,
@@ -379,7 +357,6 @@ Task("Sign-Assemblies")
                         TimeStampUri = signSha256Uri
                 }
         );
-        lastSignTimestamp = DateTime.Now;
     }
 });
 
