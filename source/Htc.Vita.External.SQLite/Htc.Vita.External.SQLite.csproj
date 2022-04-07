@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Htc.Vita.External.SQLite</RootNamespace>
+    <AssemblyName>Htc.Vita.External.SQLite</AssemblyName>
+    <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
+    <DebugType>portable</DebugType>
+    <IntermediateOutputPath>..\..\temp\$(Configuration)\$(AssemblyName)\obj</IntermediateOutputPath>
+    <OutputPath>..\..\temp\$(Configuration)\$(AssemblyName)\bin</OutputPath>
+    <!--
+    <DocumentationFile>..\..\temp\$(Configuration)\$(AssemblyName)\bin\$(AssemblyName).xml</DocumentationFile>
+    -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <LangVersion>6</LangVersion>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <Authors>HTC</Authors>
+    <PackageDescription>HTC Vita External Libraries for .NET platform (SQLite)</PackageDescription>
+    <PackageProjectUrl>https://github.com/ViveportSoftware/vita_external_sqlite_csharp/</PackageProjectUrl>
+    <PackageTags>htc;vita;sqlite</PackageTags>
+    <IsCompactFramework>false</IsCompactFramework>
+    <UseSqliteStandard>false</UseSqliteStandard>
+  </PropertyGroup>
+  <Import Project="Htc.Vita.External.SQLite.Properties.targets" />
+  <ItemGroup>
+    <PackageReference Include="Htc.Vita.Core" Version="0.10.6.12" />
+    <PackageReference Include="htc_vita_external_sqlite_api.v141" Version="0.9.0.2" ExcludeAssets="all" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
+    <Reference Include="System.Transactions" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' or '$(TargetFramework)' == 'netstandard2.0' ">
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\generated\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+    <Compile Update="Resources\SR.Designer.cs">
+      <DependentUpon>SR.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Update="SQLiteCommand.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="SQLiteCommandBuilder.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="SQLiteConnection_Linq.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Update="SQLiteDataAdapter.cs">
+      <SubType>Component</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(NuGetPackageRoot)\htc_vita_external_sqlite_api.v141\0.9.0.2\lib\Win32\vita_external_sqlite_api.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>x86\vita_external_sqlite_api.dll</Link>
+      <Pack>false</Pack>
+    </Content>
+    <EmbeddedResource Include="$(NuGetPackageRoot)\htc_vita_external_sqlite_api.v141\0.9.0.2\lib\Win32\vita_external_sqlite_api.dll.gz">
+      <Link>x86\vita_external_sqlite_api.dll.gz</Link>
+    </EmbeddedResource>
+    <Content Include="$(NuGetPackageRoot)\htc_vita_external_sqlite_api.v141\0.9.0.2\lib\x64\vita_external_sqlite_api64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>x64\vita_external_sqlite_api64.dll</Link>
+      <Pack>false</Pack>
+    </Content>
+    <EmbeddedResource Include="$(NuGetPackageRoot)\htc_vita_external_sqlite_api.v141\0.9.0.2\lib\x64\vita_external_sqlite_api64.dll.gz">
+      <Link>x64\vita_external_sqlite_api64.dll.gz</Link>
+    </EmbeddedResource>
+    <Content Include="Resources\DataTypes.xml">
+      <Pack>false</Pack>
+    </Content>
+    <Content Include="Resources\MetaDataCollections.xml">
+      <Pack>false</Pack>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\SR.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>SR.Designer.cs</LastGenOutput>
+      <LogicalName>Htc.Vita.External.SQLite.SR.resources</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>
