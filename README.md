@@ -1,6 +1,6 @@
 # HTC Vita External Libraries for .NET platform (Htc.Vita.External.SQLite)
 
-[![Coverage Status](https://coveralls.io/repos/github/ViveportSoftware/vita_external_sqlite_csharp/badge.svg?branch=main)](https://coveralls.io/github/ViveportSoftware/vita_external_sqlite_csharp?branch=main) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ViveportSoftware_vita_external_sqlite_csharp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ViveportSoftware_vita_external_sqlite_csharp)
+[![Build status](https://ci.appveyor.com/api/projects/status/m0dhm3pvvnfqs55v/branch/main?svg=true)](https://ci.appveyor.com/project/kenelin/vita-external-sqlite-csharp/branch/main) [![Coverage Status](https://coveralls.io/repos/github/ViveportSoftware/vita_external_sqlite_csharp/badge.svg?branch=main)](https://coveralls.io/github/ViveportSoftware/vita_external_sqlite_csharp?branch=main) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ViveportSoftware_vita_external_sqlite_csharp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ViveportSoftware_vita_external_sqlite_csharp)
 
 ## Dependency
 
