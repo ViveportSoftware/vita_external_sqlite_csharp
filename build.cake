@@ -176,9 +176,16 @@ Task("Build-Assemblies")
     );
 });
 
-Task("Run-Unit-Tests-Under-AnyCPU-1")
+Task("Prepare-Unit-Test-Data")
     .WithCriteria(() => "ON".Equals(buildWithUnitTesting))
     .IsDependentOn("Build-Assemblies")
+    .Does(() =>
+{
+});
+
+Task("Run-Unit-Tests-Under-AnyCPU-1")
+    .WithCriteria(() => "ON".Equals(buildWithUnitTesting))
+    .IsDependentOn("Prepare-Unit-Test-Data")
     .Does(() =>
 {
     CreateDirectory(reportXUnitDirAnyCPU);
