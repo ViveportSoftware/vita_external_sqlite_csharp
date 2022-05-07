@@ -1,7 +1,7 @@
 /********************************************************
  * ADO.NET 2.0 Data Provider for SQLite Version 3.X
  * Written by Robert Simpson (robert@blackcastlesoft.com)
- * 
+ *
  * Released to the public domain, use at your own risk!
  ********************************************************/
 
@@ -17,6 +17,7 @@ namespace Htc.Vita.External.SQLite
   using System.Globalization;
   using System.IO;
   using System.Runtime.InteropServices;
+  using System.Threading;
 
 
   /// <summary>
@@ -132,6 +133,8 @@ namespace Htc.Vita.External.SQLite
 
     internal override void Open(string strFilename, string vfsName, SQLiteConnectionFlags connectionFlags, SQLiteOpenFlagsEnum openFlags, int maxPoolSize, bool usePool)
     {
+      BumpOpenCount();
+
       //
       // NOTE: If the database connection is currently open, attempt to
       //       close it now.  This must be done because the file name or
@@ -230,6 +233,7 @@ namespace Htc.Vita.External.SQLite
 
           if (n != SQLiteErrorCode.Ok) throw new SQLiteException(n, null);
           _sql = new SQLiteConnectionHandle(db, true);
+          BumpCreateCount();
         }
         lock (_sql) { /* HACK: Force the SyncBlock to be "created" now. */ }
 

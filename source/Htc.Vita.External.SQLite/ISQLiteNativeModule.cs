@@ -43,7 +43,8 @@ namespace Htc.Vita.External.SQLite
         /// module name is the name provided as the second argument to 
         /// sqlite3_create_module() and as the argument to the USING clause of the
         /// CREATE VIRTUAL TABLE statement that is running.
-        /// The second, argv[1], is the name of the database in which the new virtual table is being created. The database name is "main" for the primary database, or
+        /// The second, argv[1], is the name of the database in which the new virtual 
+        /// table is being created. The database name is "main" for the primary database, or
         /// "temp" for TEMP database, or the name given at the end of the ATTACH
         /// statement for attached databases.  The third element of the array, argv[2], 
         /// is the name of the new virtual table, as specified following the TABLE
@@ -76,6 +77,20 @@ namespace Htc.Vita.External.SQLite
         /// held in persistent memory.  The string can be
         /// deallocated and/or reused as soon as the sqlite3_declare_vtab()
         /// routine returns.
+        /// </para>
+        /// <para>
+        /// The xConnect method can also optionally request special features
+        /// for the virtual table by making one or more calls to
+        /// the sqlite3_vtab_config() interface:
+        /// </para>
+        /// <para><code>
+        /// int sqlite3_vtab_config(sqlite3 *db, int op, ...);
+        /// </code></para>
+        /// <para>
+        /// Call calls to sqlite3_vtab_config() are optional.  But for maximum
+        /// security, it is recommended that virtual table implementations
+        /// invoke "sqlite3_vtab_config(db, SQLITE_VTAB_DIRECTONLY)" if the
+        /// virtual table will not be used from inside of triggers or views.
         /// </para>
         /// <para>
         /// The xCreate method need not initialize the pModule, nRef, and zErrMsg
@@ -265,7 +280,9 @@ namespace Htc.Vita.External.SQLite
         /// The xConnect method is very similar to xCreate. 
         /// It has the same parameters and constructs a new sqlite3_vtab structure 
         /// just like xCreate. 
-        /// And it must also call sqlite3_declare_vtab() like xCreate.
+        /// And it must also call sqlite3_declare_vtab() like xCreate.  It
+        /// should also make all of the same sqlite3_vtab_config() calls as
+        /// xCreate.
         /// </para>
         /// <para>
         /// The difference is that xConnect is called to establish a new 
@@ -429,8 +446,18 @@ namespace Htc.Vita.External.SQLite
         /// #define SQLITE_INDEX_CONSTRAINT_ISNOTNULL 70  /* 3.21.0 and later */
         /// #define SQLITE_INDEX_CONSTRAINT_ISNULL    71  /* 3.21.0 and later */
         /// #define SQLITE_INDEX_CONSTRAINT_IS        72  /* 3.21.0 and later */
+        /// #define SQLITE_INDEX_CONSTRAINT_LIMIT     73  /* 3.38.0 and later */
+        /// #define SQLITE_INDEX_CONSTRAINT_OFFSET    74  /* 3.38.0 and later */
         /// #define SQLITE_INDEX_CONSTRAINT_FUNCTION 150  /* 3.25.0 and later */
         /// #define SQLITE_INDEX_SCAN_UNIQUE           1  /* Scan visits at most 1 row */
+        /// </code></para>
+        /// <para>
+        /// Use the sqlite3_vtab_collation() interface to find the name of
+        /// the collating sequence that should be used when evaluating the i-th
+        /// constraint:
+        /// </para>
+        /// <para><code>
+        /// const char *sqlite3_vtab_collation(sqlite3_index_info*, int i);
         /// </code></para>
         /// <para>
         /// The SQLite core calls the xBestIndex method when it is compiling a query
@@ -608,6 +635,31 @@ namespace Htc.Vita.External.SQLite
         /// to function-call equivalents of those operators.
         /// </para>
         /// <para>
+        /// When aConstraint[].op is one of SQLITE_INDEX_CONSTRAINT_LIMIT or
+        /// SQLITE_INDEX_CONSTRAINT_OFFSET, that indicates that there is a
+        /// LIMIT or OFFSET clause on the SQL query statement that is using
+        /// the virtual table.  The LIMIT and OFFSET operators have no
+        /// left operand, and so when aConstraint[].op is one of
+        /// SQLITE_INDEX_CONSTRAINT_LIMIT or SQLITE_INDEX_CONSTRAINT_OFFSET
+        /// then the aConstraint[].iColumn value is meaningless and should
+        /// not be used.
+        /// </para>
+        /// <para>
+        /// The sqlite3_vtab_rhs_value() interface can be used to try to
+        /// access the right-hand operand of a constraint.  However, the value
+        /// of a right-hand operator might not be known at the time that
+        /// the xBestIndex method is run, so the sqlite3_vtab_rhs_value()
+        /// call might not be successful.  Usually the right operand of a
+        /// constraint is only available to xBestIndex if it is coded as
+        /// a literal value in the input SQL.  If the right operand is
+        /// coded as an expression or a host parameter, it probably will
+        /// not be accessible to xBestIndex.  Some operators, such as
+        /// SQLITE_INDEX_CONSTRAINT_ISNULL and
+        /// SQLITE_INDEX_CONSTRAINT_ISNOTNULL have no right-hand operand.
+        /// The sqlite3_vtab_rhs_value() interface always returns
+        /// SQLITE_NOTFOUND for such operators.
+        /// </para>
+        /// <para>
         /// Given all of the information above, the job of the xBestIndex 
         /// method it to figure out the best way to search the virtual table.
         /// </para>
@@ -628,14 +680,6 @@ namespace Htc.Vita.External.SQLite
         /// that string when it has finished with it, and thus avoid a memory leak.
         /// The idxStr value may also be a static constant string, in which case
         /// the needToFreeIdxStr boolean should remain false.
-        /// </para>
-        /// <para>
-        /// If the virtual table will output rows in the order specified by 
-        /// the ORDER BY clause, then the orderByConsumed flag may be set to 
-        /// true. If the output is not automatically in the correct order 
-        /// then orderByConsumed must be left in its default false setting. 
-        /// This will indicate to the SQLite core that it will need to do a 
-        /// separate sorting pass over the data after it comes out of the virtual table.
         /// </para>
         /// <para>
         /// The estimatedCost field should be set to the estimated number
@@ -681,10 +725,59 @@ namespace Htc.Vita.External.SQLite
         /// the EXPR value of the aConstraint[3] constraint.
         /// </para>
         /// <para>
-        /// By default, the SQLite core double checks all constraints on 
-        /// each row of the virtual table that it receives. If such a check 
-        /// is redundant, the xBestFilter method can suppress that double-check by 
-        /// setting aConstraintUsage[].omit.
+        /// By default, the SQLite generates bytecode that will double
+        /// checks all constraints on each row of the virtual table to verify
+        /// that they are satisfied.  If the virtual table can guarantee
+        /// that a constraint will always be satisfied, it can try to
+        /// suppress that double-check by setting aConstraintUsage[].omit.
+        /// However, with some exceptions, this is only a hint and
+        /// there is no guarantee that the redundant check of the constraint
+        /// will be suppressed.  Key points:
+        /// </para>
+        /// <![CDATA[<ul>]]>
+        /// <![CDATA[<li>]]>
+        /// The omit flag is only honored if the argvIndex value for the
+        /// constraint is greater than 0 and less than or equal to 16.  
+        /// Constraint checking is never suppressed for constraints
+        /// that do not pass their right operand into the xFilter method.
+        /// The current implementation is only able to suppress redundant
+        /// constraint checking for the first 16 values passed to xFilter,
+        /// though that limitation might be increased in future releases.
+        /// <![CDATA[</li>]]><![CDATA[<li>]]>
+        /// The omit flag is always honored for SQLITE_INDEX_CONSTRAINT_OFFSET
+        /// constraints as long as argvIndex is greater than 0.  Setting the
+        /// omit flag on an SQLITE_INDEX_CONSTRAINT_OFFSET constraint indicates
+        /// to SQLite that the virtual table will itself suppress the first N
+        /// rows of output, where N is the right operand of the OFFSET operator.
+        /// If the virtual table implementation sets omit on an
+        /// SQLITE_INDEX_CONSTRAINT_OFFSET constraint but then fails to suppress
+        /// the first N rows of output, an incorrect answer will result from
+        /// the overall query.
+        /// <![CDATA[</li>]]><![CDATA[</ul>]]>
+        /// <para>
+        /// If the virtual table will output rows in the order specified by 
+        /// the ORDER BY clause, then the orderByConsumed flag may be set to 
+        /// true. If the output is not automatically in the correct order 
+        /// then orderByConsumed must be left in its default false setting. 
+        /// This will indicate to the SQLite core that it will need to do a 
+        /// separate sorting pass over the data after it comes out of the virtual table.
+        /// Setting orderByConsumed is an optimization.  A query will always
+        /// get the correct answer if orderByConsumed is left at its default
+        /// value (0).  Unnecessary sort operations might be avoided resulting
+        /// in a faster query if orderByConsumed is set, but setting
+        /// orderByConsumed incorrectly can result in an incorrect answer.
+        /// It is suggested that new virtual table implementations leave
+        /// the orderByConsumed value unset initially, and then after everything
+        /// else is known to be working correctly, go back and attempt to
+        /// optimize by setting orderByConsumed where appropriate.
+        /// </para>
+        /// <para>
+        /// Sometimes the orderByConsumed flag can be safely set even if
+        /// the outputs from the virtual table are not strictly in the order
+        /// specified by nOrderBy and aOrderBy.  If the
+        /// sqlite3_vtab_distinct() interface returns 1 or 2, that indicates
+        /// that the ordering can be relaxed.  See the documentation on
+        /// sqlite3_vtab_distinct() for further information.
         /// </para>
         /// <para>
         /// The xBestIndex method should return SQLITE_OK on success.  If any
@@ -1457,16 +1550,17 @@ namespace Htc.Vita.External.SQLite
         /// the virtual table is able to exploit that function to speed up the query
         /// result.  When xFindFunction returns SQLITE_INDEX_CONSTRAINT_FUNCTION or 
         /// larger, the value returned becomes the sqlite3_index_info.aConstraint.op
-        /// value for one of the constraints passed into xBestIndex() and the second
-        /// argument becomes the value corresponding to that constraint that is passed
-        /// to xFilter().  This enables the
-        /// xBestIndex()/xFilter implementations to use the function to speed
-        /// its search.
+        /// value for one of the constraints passed into xBestIndex().  The first
+        /// argument to the function is the column identified by 
+        /// aConstraint[].iColumn field of the constraint and the second argument to the
+        /// function is the value that will be passed into xFilter() (if the
+        /// aConstraintUsage[].argvIndex value is set) or the value returned from
+        /// sqlite3_vtab_rhs_value().
         /// </para>
         /// <para>
-        /// The technique of having xFindFunction() return values of
-        /// SQLITE_INDEX_CONSTRAINT_FUNCTION was initially used in the implementation
-        /// of the Geopoly module.  The xFindFunction() method of that module returns
+        /// The Geopoly module is an example of a virtual table that makes use
+        /// of SQLITE_INDEX_CONSTRAINT_FUNCTION to improve performance.
+        /// The xFindFunction() method for Geopoly returns
         /// SQLITE_INDEX_CONSTRAINT_FUNCTION for the geopoly_overlap() SQL function
         /// and it returns
         /// SQLITE_INDEX_CONSTRAINT_FUNCTION+1 for the geopoly_within() SQL function.
@@ -1474,6 +1568,7 @@ namespace Htc.Vita.External.SQLite
         /// </para>
         /// <para><code>
         /// SELECT * FROM geopolytab WHERE geopoly_overlap(_shape, $query_polygon);
+        /// SELECT * FROM geopolytab WHERE geopoly_within(_shape, $query_polygon);
         /// </code></para>
         /// <para>
         /// Note that infix functions (LIKE, GLOB, REGEXP, and MATCH) reverse 

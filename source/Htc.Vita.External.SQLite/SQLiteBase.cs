@@ -14,6 +14,8 @@ namespace Htc.Vita.External.SQLite
   using System.Runtime.InteropServices;
 #endif
 
+  using System.Threading;
+
   /// <summary>
   /// This internal class provides the foundation of SQLite support.  It defines all the abstract members needed to implement
   /// a SQLite data provider, and inherits from SQLiteConvert which allows for simple translations of string to and from SQLite.
@@ -134,7 +136,8 @@ namespace Htc.Vita.External.SQLite
     /// memory associated with the user-defined functions and collating sequences tied to the closed connection.
     /// </remarks>
     /// <param name="disposing">Non-zero if connection is being disposed, zero otherwise.</param>
-    internal abstract void Close(bool disposing);
+    /// <returns>Returns non-zero if the connection was actually closed (i.e. and not simply returned to a pool, etc).</returns>
+    internal abstract bool Close(bool disposing);
     /// <summary>
     /// Sets the busy timeout on the connection.  SQLiteCommand will call this before executing any command.
     /// </summary>
@@ -569,6 +572,66 @@ namespace Htc.Vita.External.SQLite
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
+    protected static long BumpCreateCount()
+    {
+        return Interlocked.Increment(ref _createCount);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected static long BumpOpenCount()
+    {
+        return Interlocked.Increment(ref _openCount);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected static long BumpCloseCount()
+    {
+        return Interlocked.Increment(ref _closeCount);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    protected static long BumpDisposeCount()
+    {
+        return Interlocked.Increment(ref _disposeCount);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static long _createCount;
+    internal static long CreateCount
+    {
+        get { return Interlocked.CompareExchange(ref _createCount, 0, 0); }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static long _openCount;
+    internal static long OpenCount
+    {
+        get { return Interlocked.CompareExchange(ref _openCount, 0, 0); }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static long _closeCount;
+    internal static long CloseCount
+    {
+        get { return Interlocked.CompareExchange(ref _closeCount, 0, 0); }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static long _disposeCount;
+    internal static long DisposeCount
+    {
+        get { return Interlocked.CompareExchange(ref _disposeCount, 0, 0); }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
     #region IDisposable Members
     public void Dispose()
     {
@@ -591,8 +654,15 @@ namespace Htc.Vita.External.SQLite
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
+    protected bool wasDisposed;
     protected virtual void Dispose(bool disposing)
     {
+        if (wasDisposed)
+        {
+            /* IGNORED */
+            BumpDisposeCount();
+        }
+
         if (!disposed)
         {
             //if (disposing)
@@ -624,7 +694,7 @@ namespace Htc.Vita.External.SQLite
 
     // These statics are here for lack of a better place to put them.
     // They exist here because they are called during the finalization of
-    // a SQLiteStatementHandle, SQLiteConnectionHandle, and SQLiteFunctionCookieHandle.
+    // SQLiteStatementHandle and SQLiteConnectionHandle, etc.
     // Therefore these functions have to be static, and have to be low-level.
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
