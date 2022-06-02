@@ -1906,7 +1906,7 @@ namespace Htc.Vita.External.SQLite
     /// The native handle associated with the connection or <see cref="IntPtr.Zero" /> if it
     /// cannot be determined.
     /// </returns>
-    private static SQLiteConnectionHandle GetNativeHandle(
+    private static SQLiteConnectionHandle GetCriticalHandle(
         SQLiteConnection connection
         )
     {
@@ -1932,6 +1932,81 @@ namespace Htc.Vita.External.SQLite
         }
 
         return handle;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    /// <summary>
+    /// Attempts to obtain and return the underlying <see cref="CriticalHandle" />
+    /// derived object associated with this connection.  This method should only be
+    /// used by the thread that created this connection; otherwise, the results are
+    /// undefined.
+    /// <code>
+    /// WARNING: This method is not officially supported for external callers and
+    ///          should be considered "experimental", even though it is "public".
+    /// </code>
+    /// </summary>
+    /// <returns>
+    /// The underlying <see cref="CriticalHandle" /> derived object associated with
+    /// this connection -OR- null if it is unavailable.
+    /// </returns>
+    public object GetCriticalHandle()
+    {
+        CheckDisposed();
+
+        return GetCriticalHandle(this);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    /// <summary>
+    /// Attempts to create and return the specified built-in implementation
+    /// of the <see cref="ISQLiteConnectionPool" /> interface.  If there is
+    /// no such built-in implementation, <see cref="NotImplementedException" />
+    /// will be thrown.
+    /// </summary>
+    /// <param name="typeName">
+    /// The short name of the <see cref="ISQLiteConnectionPool" /> interface
+    /// implementation to create.
+    /// </param>
+    /// <param name="argument">
+    /// The single argument to pass into the constructor of the
+    /// <see cref="ISQLiteConnectionPool" /> interface implementation to
+    /// create, if any.
+    /// </param>
+    /// <returns>
+    /// The built-in implementation of the <see cref="ISQLiteConnectionPool" />
+    /// interface -OR- null if it cannot be created.
+    /// </returns>
+    public static ISQLiteConnectionPool CreatePool(
+        string typeName,
+        object argument
+        )
+    {
+        if (typeName == null)
+            return null;
+
+        switch (typeName)
+        {
+#if !PLATFORM_COMPACTFRAMEWORK && DEBUG
+            case "null":
+                {
+                    return new NullConnectionPool(argument != null);
+                }
+#endif
+            case "weak":
+                {
+                    return new WeakConnectionPool();
+                }
+            case "strong":
+                {
+                    return new StrongConnectionPool();
+                }
+            default:
+                {
+                    throw new NotImplementedException();
+                }
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -3224,6 +3299,38 @@ namespace Htc.Vita.External.SQLite
     }
 
     /// <summary>
+    /// Returns the total number of created connections.
+    /// </summary>
+    public static long CreateCount
+    {
+        get { return SQLiteBase.CreateCount; }
+    }
+
+    /// <summary>
+    /// Returns the total number of <see cref="Open" /> method calls for all connections.
+    /// </summary>
+    public static long OpenCount
+    {
+        get { return SQLiteBase.OpenCount; }
+    }
+
+    /// <summary>
+    /// Returns the total number of <see cref="Close" /> method calls for all connections.
+    /// </summary>
+    public static long CloseCount
+    {
+        get { return SQLiteBase.CloseCount; }
+    }
+
+    /// <summary>
+    /// Returns the total number of disposed connections.
+    /// </summary>
+    public static long DisposeCount
+    {
+        get { return SQLiteBase.DisposeCount; }
+    }
+
+    /// <summary>
     /// Clears the connection pool associated with the connection.  Any other active connections using the same database file
     /// will be discarded instead of returned to the pool when they are closed.
     /// </summary>
@@ -3310,7 +3417,7 @@ namespace Htc.Vita.External.SQLite
     {
         CheckDisposed();
 
-        return new SQLiteSession(GetNativeHandle(this), _flags, databaseName);
+        return new SQLiteSession(GetCriticalHandle(this), _flags, databaseName);
     }
 
     /// <summary>
@@ -3329,7 +3436,7 @@ namespace Htc.Vita.External.SQLite
     {
         CheckDisposed();
 
-        return new SQLiteMemoryChangeSet(rawData, GetNativeHandle(this), _flags);
+        return new SQLiteMemoryChangeSet(rawData, GetCriticalHandle(this), _flags);
     }
 
     /// <summary>
@@ -3352,7 +3459,7 @@ namespace Htc.Vita.External.SQLite
     {
         CheckDisposed();
 
-        return new SQLiteMemoryChangeSet(rawData, GetNativeHandle(this), _flags, flags);
+        return new SQLiteMemoryChangeSet(rawData, GetCriticalHandle(this), _flags, flags);
     }
 
     /// <summary>
@@ -3378,7 +3485,7 @@ namespace Htc.Vita.External.SQLite
         CheckDisposed();
 
         return new SQLiteStreamChangeSet(
-            inputStream, outputStream, GetNativeHandle(this), _flags);
+            inputStream, outputStream, GetCriticalHandle(this), _flags);
     }
 
     /// <summary>
@@ -3408,7 +3515,7 @@ namespace Htc.Vita.External.SQLite
         CheckDisposed();
 
         return new SQLiteStreamChangeSet(
-            inputStream, outputStream, GetNativeHandle(this), _flags, flags);
+            inputStream, outputStream, GetCriticalHandle(this), _flags, flags);
     }
 
     /// <summary>

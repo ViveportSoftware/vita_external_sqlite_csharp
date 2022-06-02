@@ -68,7 +68,7 @@ namespace Htc.Vita.External.SQLite
         "d8215c18a4349a436dd499e3c385cc683015f886f6c10bd90115eb2bd61b67750839e3a19941dc9c";
 
 #if !PLATFORM_COMPACTFRAMEWORK
-    internal const string DesignerVersion = "1.0.115.5";
+    internal const string DesignerVersion = "1.0.116.0";
 #endif
 
     /// <summary>
@@ -171,6 +171,10 @@ namespace Htc.Vita.External.SQLite
     {
         InitializeForceLogPrepare();
 
+        SQLiteConnectionPool.CreateAndInitialize(
+            null, UnsafeNativeMethods.GetSettingValue(
+            "SQLite_StrongConnectionPool", null) != null, false);
+
         if (db != IntPtr.Zero)
         {
             _sql = new SQLiteConnectionHandle(db, ownHandle);
@@ -248,7 +252,8 @@ namespace Htc.Vita.External.SQLite
                 DisposeModules();
 #endif
 
-                Close(true); /* Disposing, cannot throw. */
+                /* Disposing, cannot throw. */
+                Close(true);
             }
         }
         finally
@@ -268,6 +273,8 @@ namespace Htc.Vita.External.SQLite
 #if DEBUG
     public override string ToString()
     {
+        CheckDisposed();
+
         return HelperMethods.StringFormat(
             CultureInfo.InvariantCulture,
             "fileName = {0}, returnToFileName = {1}, flags = {2}",
@@ -311,16 +318,17 @@ namespace Htc.Vita.External.SQLite
 
     // It isn't necessary to cleanup any functions we've registered.  If the connection
     // goes to the pool and is resurrected later, re-registered functions will overwrite the
-    // previous functions.  The SQLiteFunctionCookieHandle will take care of freeing unmanaged
-    // resources belonging to the previously-registered functions.
-    internal override void Close(bool disposing)
+    // previous functions.
+    internal override bool Close(bool disposing)
     {
+      BumpCloseCount();
+
       if (_sql != null)
       {
           if (!_sql.OwnHandle)
           {
               _sql = null;
-              return;
+              return wasDisposed;
           }
 
           bool unbindFunctions = HelperMethods.HasFlags(_flags, SQLiteConnectionFlags.UnbindFunctionsOnClose);
@@ -421,11 +429,14 @@ namespace Htc.Vita.External.SQLite
               }
 
               _sql.Dispose();
+              wasDisposed = true;
 
               FreeDbName(!disposing);
           }
           _sql = null;
       }
+
+      return wasDisposed;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -1047,6 +1058,8 @@ namespace Htc.Vita.External.SQLite
 
     internal override void Open(string strFilename, string vfsName, SQLiteConnectionFlags connectionFlags, SQLiteOpenFlagsEnum openFlags, int maxPoolSize, bool usePool)
     {
+      BumpOpenCount();
+
       //
       // NOTE: If the database connection is currently open, attempt to
       //       close it now.  This must be done because the file name or
@@ -1128,6 +1141,7 @@ namespace Htc.Vita.External.SQLite
 
           if (n != SQLiteErrorCode.Ok) throw new SQLiteException(n, null);
           _sql = new SQLiteConnectionHandle(db, true);
+          BumpCreateCount();
         }
         lock (_sql) { /* HACK: Force the SyncBlock to be "created" now. */ }
 

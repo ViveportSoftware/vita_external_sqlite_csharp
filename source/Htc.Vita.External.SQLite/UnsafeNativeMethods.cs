@@ -893,7 +893,7 @@ namespace Htc.Vita.External.SQLite
 
   internal static class HelperMethodsMod
   {
-      private const string NativeApiVersion = "0.9.0.6";
+      private const string NativeApiVersion = "0.9.0.12";
 
       private static readonly object FileCheckingLock = new object();
       private static readonly object FileExtractingLock = new object();
@@ -1040,8 +1040,8 @@ namespace Htc.Vita.External.SQLite
 
       private static void InitKnownVersion()
       {
-          Sha1ChecksumWithVersion.Add("1d3bd7cd0fbda67d7dff667750acf178000cc030", "0.9.0.6 ( win32 / x86 )");
-          Sha1ChecksumWithVersion.Add("06689377e4a199b80d77aa9a9ed0f73e5928d71c", "0.9.0.6 ( win32 / x64 )");
+          Sha1ChecksumWithVersion.Add("0c31f1c46f3d8d19d33c28d27c31b06ddd9839d9", "0.9.0.12 ( win32 / x86 )");
+          Sha1ChecksumWithVersion.Add("6c836f41f62251e8b126e4f18628f476e157cb06", "0.9.0.12 ( win32 / x64 )");
       }
 
       private static string PrepareBinary(string resourceName, string platformName, string binaryName)
@@ -3758,7 +3758,7 @@ namespace Htc.Vita.External.SQLite
     //       System.Data.SQLite functionality (e.g. being able to bind
     //       parameters and handle column values of types Int64 and Double).
     //
-    internal const string SQLITE_DLL = "SQLite.Interop.115.dll";
+    internal const string SQLITE_DLL = "SQLite.Interop.116.dll";
 #elif SQLITE_STANDARD
     //
     // NOTE: Otherwise, if the standard SQLite library is enabled, use it.
