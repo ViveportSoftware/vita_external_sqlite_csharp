@@ -52,6 +52,14 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="$(NuGetPackageRoot)\vita_external_sqlite_api.v141\0.9.0.12\lib\ARM64\vita_external_sqlite_api64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>arm64\vita_external_sqlite_api64.dll</Link>
+      <Pack>false</Pack>
+    </Content>
+    <EmbeddedResource Include="$(NuGetPackageRoot)\vita_external_sqlite_api.v141\0.9.0.12\lib\ARM64\vita_external_sqlite_api64.dll.gz">
+      <Link>arm64\vita_external_sqlite_api64.dll.gz</Link>
+    </EmbeddedResource>
     <Content Include="$(NuGetPackageRoot)\vita_external_sqlite_api.v141\0.9.0.12\lib\Win32\vita_external_sqlite_api.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>x86\vita_external_sqlite_api.dll</Link>
