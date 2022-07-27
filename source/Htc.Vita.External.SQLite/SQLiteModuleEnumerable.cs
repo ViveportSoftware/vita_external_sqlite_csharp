@@ -305,15 +305,6 @@ namespace Htc.Vita.External.SQLite
         /// for the virtual table.
         /// </summary>
         private IEnumerable enumerable;
-
-        ///////////////////////////////////////////////////////////////////////
-
-        /// <summary>
-        /// Non-zero if different object instances with the same value should
-        /// generate different row identifiers, where applicable.  This has no
-        /// effect on the .NET Compact Framework.
-        /// </summary>
-        private bool objectIdentity;
         #endregion
 
         ///////////////////////////////////////////////////////////////////////
@@ -360,13 +351,12 @@ namespace Htc.Vita.External.SQLite
             IEnumerable enumerable,
             bool objectIdentity
             )
-            : base(name)
+            : base(name, objectIdentity)
         {
             if (enumerable == null)
                 throw new ArgumentNullException("enumerable");
 
             this.enumerable = enumerable;
-            this.objectIdentity = objectIdentity;
         }
         #endregion
 

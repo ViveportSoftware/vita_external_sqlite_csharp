@@ -2028,8 +2028,11 @@ namespace Htc.Vita.External.SQLite
         )
     {
 #if !PLATFORM_COMPACTFRAMEWORK
-        if ((connection != null) && !connection.CanRaiseEvents)
+        if ((connection != null) &&
+            !connection.disposed && !connection.CanRaiseEvents)
+        {
             return;
+        }
 #endif
 
         SQLiteConnectionEventHandler handlers;
@@ -2969,6 +2972,12 @@ namespace Htc.Vita.External.SQLite
     /// </param>
     protected override void Dispose(bool disposing)
     {
+        OnChanged(this, new ConnectionEventArgs(
+            disposing ?
+                SQLiteConnectionEventType.DisposingConnection :
+                SQLiteConnectionEventType.FinalizingConnection,
+            null, null, null, null, null, null, null));
+
 #if !NET_COMPACT_20 && TRACE_WARNING
         if (HelperMethods.HasFlags(_flags, SQLiteConnectionFlags.TraceWarning))
         {
@@ -3010,6 +3019,12 @@ namespace Htc.Vita.External.SQLite
             // NOTE: Everything should be fully disposed at this point.
             //
             disposed = true;
+
+            OnChanged(this, new ConnectionEventArgs(
+                disposing ?
+                    SQLiteConnectionEventType.DisposedConnection :
+                    SQLiteConnectionEventType.FinalizedConnection,
+                null, null, null, null, null, null, null));
         }
     }
     #endregion
@@ -3224,6 +3239,9 @@ namespace Htc.Vita.External.SQLite
     {
       CheckDisposed();
 
+      if (Object.ReferenceEquals(_lastConnectionInOpen, this))
+          _lastConnectionInOpen = null; /* THREAD-SAFE: per-thread datum. */
+
       OnChanged(this, new ConnectionEventArgs(
           SQLiteConnectionEventType.Closing, null, null, null, null, null,
           null, null));
@@ -3276,6 +3294,12 @@ namespace Htc.Vita.External.SQLite
         }
         _transactionLevel = 0;
         _transactionSequence = 0;
+      }
+      else
+      {
+          OnChanged(this, new ConnectionEventArgs(
+              SQLiteConnectionEventType.NothingToDo,
+              null, null, null, null, null, null, null));
       }
 
       StateChangeEventArgs eventArgs = null;

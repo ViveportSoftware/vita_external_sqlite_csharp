@@ -68,7 +68,7 @@ namespace Htc.Vita.External.SQLite
         "d8215c18a4349a436dd499e3c385cc683015f886f6c10bd90115eb2bd61b67750839e3a19941dc9c";
 
 #if !PLATFORM_COMPACTFRAMEWORK
-    internal const string DesignerVersion = "1.0.116.0";
+    internal const string DesignerVersion = "1.0.117.0";
 #endif
 
     /// <summary>
@@ -435,6 +435,9 @@ namespace Htc.Vita.External.SQLite
           }
           _sql = null;
       }
+
+      if (wasDisposed)
+          GC.SuppressFinalize(this);
 
       return wasDisposed;
     }

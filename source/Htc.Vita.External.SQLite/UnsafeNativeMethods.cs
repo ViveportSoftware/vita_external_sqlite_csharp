@@ -1098,8 +1098,18 @@ namespace Htc.Vita.External.SQLite
 
       internal static Core.Runtime.Platform.NativeLibInfo PrepareLibrary()
       {
-          var is64 = IntPtr.Size == 8;
-          if (is64)
+          var processArch = Core.Runtime.Platform.DetectProcessArch();
+          if (processArch == Core.Runtime.Platform.ProcessArch.Arm64)
+          {
+              return Core.Runtime.Platform.LoadNativeLib(
+                      PrepareBinary(
+                              $"{Library.PackagePrefix}.arm64.{Library.VitaExternalSqliteApi64}.dll.gz",
+                              "arm64",
+                              $"{Library.VitaExternalSqliteApi64}.dll"
+                      ) ?? $"arm64/{Library.VitaExternalSqliteApi64}.dll"
+              );
+          }
+          else if (processArch == Core.Runtime.Platform.ProcessArch.X64)
           {
               return Core.Runtime.Platform.LoadNativeLib(
                       PrepareBinary(
@@ -3758,7 +3768,7 @@ namespace Htc.Vita.External.SQLite
     //       System.Data.SQLite functionality (e.g. being able to bind
     //       parameters and handle column values of types Int64 and Double).
     //
-    internal const string SQLITE_DLL = "SQLite.Interop.116.dll";
+    internal const string SQLITE_DLL = "SQLite.Interop.117.dll";
 #elif SQLITE_STANDARD
     //
     // NOTE: Otherwise, if the standard SQLite library is enabled, use it.
